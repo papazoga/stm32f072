@@ -15,5 +15,5 @@ firmware.hex: firmware.elf
 	$(OBJCOPY) -I elf32-littlearm -O ihex firmware.elf firmware.hex
 
 clean:
-	rm -f $(OBJS) firmware.elf
+	rm -f $(OBJS) *.hex *.elf
 
