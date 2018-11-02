@@ -6,7 +6,7 @@
 #define THUMB_ADDR(_x)   (_x+1)
 	.section ".vectors"
 _reset:
-	.word 0x20000400
+	.word _stack_top
 	.word THUMB_ADDR(_Reset_handler)
 	.word THUMB_ADDR(_NMI_handler)
 	.word THUMB_ADDR(_HardFault_handler)
@@ -60,5 +60,20 @@ _reset:
 
 	/* Override the reset handler */
 _Reset_handler:
-	b _Reset_handler
-	
+	/* Copy the data section */
+	ldr r0, =_data_src
+	ldr r1, =_data_dst
+	ldr r2, =_data_size
+
+	cmp r2, #0
+	beq l1
+
+l0:	ldr r3, [r0]
+	str r3, [r1]
+	add r0, r0, #4
+	add r1, r1, #4
+	sub r2, r2, #4
+	bne l0
+
+l1:	bl main
+

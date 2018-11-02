@@ -1,0 +1,11 @@
+
+
+
+GPIOB = 0x48000400
+.global GPIOB
+
+GPIOE = 0x48001000
+.global GPIOE
+
+RCC = 0x40021000
+.global RCC

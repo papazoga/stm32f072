@@ -25,15 +25,18 @@ SECTIONS
 		. = ALIGN(4);
 	} >flash
 
+	. = ALIGN(4);
+
+	_data_src = .;
+
 	.data : AT( ADDR(.flashdata) + SIZEOF(.flashdata) )
 	{
-		. = ALIGN(4);
-		_data_start = .;
+		_data_dst = .;
 		*(.data)
 		_data_end = .;
 	} >ram
 
-	_data_size = _data_end - _data_start;
+	_data_size = _data_end - _data_dst;
 
 	.bss :
 	{
@@ -46,5 +49,9 @@ SECTIONS
 		*(.noinit*)
 		PROVIDE(__noinit_end = .);
 	} >ram
+
+	. = . + STACK_SIZE;
+
+	_stack_top = .;
 }
 
