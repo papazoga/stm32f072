@@ -10,7 +10,7 @@ struct gpio_regs {
 	unsigned int LCKR;
 	unsigned int AFRL;
 	unsigned int AFRH;
-	unsigned int BRR;;
+	unsigned int BRR;
 };
 
 struct rcc_regs {
@@ -30,6 +30,28 @@ struct rcc_regs {
 	unsigned int CR2;
 };
 
+struct advanced_control_timer_regs {
+	unsigned int CR1;
+	unsigned int CR2;
+	unsigned int SMCR;
+	unsigned int DIER;
+	unsigned int SR;
+	unsigned int EGR;
+	unsigned int CCMR1;
+	unsigned int CCMR2;
+	unsigned int CCER;
+	unsigned int CNT;
+	unsigned int PSC;
+	unsigned int ARR;
+	unsigned int RCR;
+	unsigned int CCR1;
+	unsigned int CCR2;
+	unsigned int CCR3;
+	unsigned int CCR4;
+	unsigned int BDTR;
+	unsigned int DCR;
+	unsigned int DMAR;
+};
 
 #define RCC_CFGR_SW_OFFSET 0
 #define RCC_CFGR_SWS_OFFSET 2
@@ -45,6 +67,13 @@ struct rcc_regs {
 
 #define RCC_CFGR2_PREDIV_OFFSET 0
 
+extern volatile struct gpio_regs GPIOA;
 extern volatile struct gpio_regs GPIOB;
+extern volatile struct gpio_regs GPIOC;
+extern volatile struct gpio_regs GPIOD;
 extern volatile struct gpio_regs GPIOE;
+extern volatile struct gpio_regs GPIOF;
+
+extern volatile struct advanced_control_timer_regs TIM1;
+
 extern volatile struct rcc_regs RCC;

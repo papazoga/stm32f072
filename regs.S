@@ -1,11 +1,150 @@
+TIM0 = 0x40000000
+.global TIM0
 
+TIM3 = 0x40000400
+.global TIM3
 
+TIM6 = 0x40001000
+.global TIM6
+
+TIM7 = 0x40001400
+.global TIM7
+
+TIM14 = 0x40002000
+.global TIM14
+
+RTC = 0x40002800
+.global RTC
+
+WWDG = 0x40002c00
+.global WWDG
+
+IWDG = 0x40003000
+.global IWDG
+
+SPI2 = 0x40003800
+.global SPI2
+
+USART2 = 0x40004400
+.global USART2
+
+USART3 = 0x40004800
+.global USART3
+
+USART4 = 0x40004c00
+.global USART4
+
+USART5 = 0x40005000
+.global USART5
+
+I2C1 = 0x40005400
+.global I2C1
+
+I2C2 = 0x40005800
+.global I2C2
+
+USB = 0x40005c00
+.global USB
+
+USB_SRAM = 0x40006000
+.global USB_SRAM
+
+CAN_SRAM = 0x40006000
+.global CAN_SRAM
+
+CAN = 0x40006400
+.global CAN
+
+CRS = 0x40006c00
+.global CRS
+
+PWR = 0x40007000
+.global PWR
+
+DAC = 0x40007400
+.global DAC
+
+CEC = 0x40007800
+.global CEC
+
+SYSCFG = 0x40010000
+.global SYSCFG
+
+COMP = 0x40010000
+.global COMP
+
+EXTI = 0x40010400
+.global EXTI
+
+USART6 = 0x40011400
+.global USART6
+
+USART7 = 0x40011800
+.global USART7
+
+USART8 = 0x40011c00
+.global USART8
+
+ADC = 0x40012400
+.global ADC
+
+TIM1 = 0x40012c00
+.global TIM1
+
+SPI1 = 0x40013000
+.global SPI1
+
+USART1 = 0x40013800
+.global USART1
+
+TIM15 = 0x40014000
+.global TIM15
+
+TIM16 = 0x40014400
+.global TIM16
+
+TIM17 = 0x40014800
+.global TIM17
+
+DBGMCU = 0x40015800
+.global DBGMCU
+
+DMA = 0x40020000
+.global DMA
+
+DMA2 = 0x40020400
+.global DMA2
+
+RCC = 0x40021000
+.global RCC
+
+FLASH = 0x40022000
+.global FLASH
+
+CRC = 0x40023000
+.global CRC
+
+TSC = 0x40024000
+.global TSC
+
+GPIOA = 0x48000000
+.global GPIOA
 
 GPIOB = 0x48000400
 .global GPIOB
 
-GPIOE = 0x48001000
-.global GPIOE
+GPIOC = 0x48000800
+.global GPIOC
 
-RCC = 0x40021000
-.global RCC
+GPIOD = 0x48000c00
+.global GPIOD
+
+CPIOE = 0x48001000
+.global CPIOE
+
+GPIOF = 0x48001400
+.global GPIOF
+
+CORTEX_M0 = 0xe0000000
+.global CORTEX_M0
+

@@ -1,4 +1,4 @@
-CFLAGS=-mcpu=cortex-m0plus -mthumb
+CFLAGS=-mcpu=cortex-m0plus -mthumb -g
 ASFLAGS=-mcpu=cortex-m0plus -mthumb
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
