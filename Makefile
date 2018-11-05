@@ -17,6 +17,8 @@ firmware.hex: firmware.elf
 firmware.bin: firmware.elf
 	$(OBJCOPY) -I elf32-littlearm -O binary firmware.elf firmware.bin
 
+regs.S: regs.txt
+	sed regs.txt -e 's/\([^ ]*\) \(.*\)$$/\1 = \2\n.global \1\n/' >regs.S
 clean:
 	rm -f $(OBJS) *.hex *.elf *.bin
 
