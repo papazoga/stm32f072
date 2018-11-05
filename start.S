@@ -67,20 +67,36 @@ _reset:
 
 	/* Override the reset handler */
 _Reset_handler:
+	/* Initialize the bss */
+	ldr r1, =_bss_size
+	cmp r1, #0
+	beq bss_done
+
+	ldr r0, =_bss_start
+	sub r2, r2, r2
+bss_loop:
+	str r2, [r0]
+	add r0, r0, #4
+	sub r1, r1, #4
+	bne bss_loop
+
 	/* Copy the data section */
+bss_done:
 	ldr r0, =_data_src
 	ldr r1, =_data_dst
 	ldr r2, =_data_size
 
 	cmp r2, #0
-	beq l1
+	beq data_done
 
-l0:	ldr r3, [r0]
+data_loop:
+	ldr r3, [r0]
 	str r3, [r1]
 	add r0, r0, #4
 	add r1, r1, #4
 	sub r2, r2, #4
-	bne l0
+	bne data_loop
 
-l1:	bl main
+data_done:
+	bl main
 

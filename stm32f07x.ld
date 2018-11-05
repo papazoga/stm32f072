@@ -38,10 +38,15 @@ SECTIONS
 
 	_data_size = _data_end - _data_dst;
 
+	. = ALIGN(4);
 	.bss :
 	{
+		_bss_start = .;
 		*(.bss COMMON)
+		_bss_end = .;
 	} >ram
+
+	_bss_size = _bss_end - _bss_start;
 
 	.noinit (NOLOAD):
 	{
