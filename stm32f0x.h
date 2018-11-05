@@ -1,3 +1,5 @@
+#ifndef STM32F0X_H
+#define STM32F0X_H
 
 struct gpio_regs {
 	unsigned int MODER;
@@ -66,6 +68,24 @@ struct advanced_control_timer_regs {
 #define RCC_CFGR_PLLNODIV_OFFSET 31
 
 #define RCC_CFGR2_PREDIV_OFFSET 0
+
+#define RCC_AHBENR_DMAEN (1<<0)
+#define RCC_AHBENR_DMA2EN_OFFSET 1
+#define RCC_AHBENR_SRAMEN (1<<2)
+#define RCC_AHBENR_FLITFEN (1<<4)
+#define RCC_AHBENR_CRCEN (1<<6)
+#define RCC_AHBENR_IOPAEN (1<<17)
+#define RCC_AHBENR_IOPBEN (1<<18)
+#define RCC_AHBENR_IOPCEN (1<<19)
+#define RCC_AHBENR_IOPDEN (1<<20)
+#define RCC_AHBENR_IOPEEN (1<<21)
+#define RCC_AHBENR_IOPFEN (1<<22)
+#define RCC_AHBENR_IOPGEN (1<<23)
+
+#define RCC_APB2ENR_TIM1EN (1<<11)
+
+#define RCC_CR2_HSI48ON (1<<16)
+#define RCC_CR2_HSI48RDY (1<<17)
 
 extern volatile struct gpio_regs GPIOA;
 extern volatile struct gpio_regs GPIOB;
