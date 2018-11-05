@@ -10,10 +10,19 @@ _reset:
 	.word THUMB_ADDR(_Reset_handler)
 	.word THUMB_ADDR(_NMI_handler)
 	.word THUMB_ADDR(_HardFault_handler)
-
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
 	.word THUMB_ADDR(_SVCall_handler)
+	.word 0
+	.word 0
 	.word THUMB_ADDR(_PendSV_handler)
 	.word THUMB_ADDR(_SysTick_handler)
+
 	.word THUMB_ADDR(_WWDG_handler)
 
 	.word THUMB_ADDR(_PVD_VDDIO2_handler)
@@ -27,11 +36,9 @@ _reset:
 	.word THUMB_ADDR(_TSC_handler)
 
 	.word THUMB_ADDR(_DMA_CH1_handler)
-	.word THUMB_ADDR(_DMA_CH2_3_handler)
-	.word THUMB_ADDR(_DMA2_CH1_2_handler)
-	.word THUMB_ADDR(_DMA_CH4_5_6_7_handler)
+	.word THUMB_ADDR(_DMA_CH2_3_DMA2_CH1_2_handler)
+	.word THUMB_ADDR(_DMA_CH4_5_6_7_DMA2_CH3_4_5_handler)
 
-	.word THUMB_ADDR(_DMA2_CH3_4_5_handler)
 	.word THUMB_ADDR(_ADC_COMP_handler)
 	.word THUMB_ADDR(_TIM1_BRK_UP_TRG_COM_handler)
 	.word THUMB_ADDR(_TIM1_CC_handler)

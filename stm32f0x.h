@@ -77,3 +77,44 @@ extern volatile struct gpio_regs GPIOF;
 extern volatile struct advanced_control_timer_regs TIM1;
 
 extern volatile struct rcc_regs RCC;
+
+extern unsigned int NVIC_ISER;
+extern unsigned int NVIC_ISPR;
+extern unsigned int NVIC_ICPR;
+extern unsigned int NVIC_IPR[8];
+
+/* Interrupts */
+#define _WWDG_IRQ 0
+#define _PVD_VDDIO2_IRQ 1
+#define _RTC_IRQ 2
+#define _FLASH_IRQ 3
+#define _RCC_CRS_IRQ 4
+#define _EXTI0_1_IRQ 5
+#define _EXTI2_3_IRQ 6
+#define _EXTI4_15_IRQ 7
+#define _TSC_IRQ 8
+#define _DMA_CH1_IRQ 9
+#define _DMA_CH2_3_DMA2_CH_1_2_IRQ 10
+#define _DMA_CH4_5_6_7_DMA2_CH3_4_5_IRQ 11
+#define _ADC_COMP_IRQ 12
+#define _TIM1_BRK_UP_TRG_COM_IRQ 13
+#define _TIM1_CC_IRQ 14
+#define _TIM2_IRQ 15
+#define _TIM3_IRQ 16
+#define _TIM6_DAC_IRQ 17
+#define _TIM7_IRQ 18
+#define _TIM14_IRQ 19
+#define _TIM15_IRQ 20
+#define _TIM16_IRQ 21
+#define _TIM17_IRQ 22
+#define _I2C1_IRQ 23
+#define _I2C2_IRQ 24
+#define _SPI1_IRQ 25
+#define _SPI2_IRQ 26
+#define _USART1_IRQ 27
+#define _USART2_IRQ 28
+#define _USART3_4_5_6_7_8_IRQ 29
+#define _CEC_CAN_IRQ 30
+#define _USB_IRQ 31
+
+#endif
