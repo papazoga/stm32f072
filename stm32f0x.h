@@ -55,6 +55,17 @@ struct advanced_control_timer_regs {
 	unsigned int DMAR;
 };
 
+struct usb_regs {
+	unsigned int EPR[16];
+	unsigned int CNTR;
+	unsigned int ISTR;
+	unsigned int FNR;
+	unsigned int DADDR;
+	unsigned int BTABLE;
+	unsigned int LMPCSR;
+	unsigned int BCDR;
+};
+
 #define RCC_CFGR_SW_OFFSET 0
 #define RCC_CFGR_SWS_OFFSET 2
 #define RCC_CFGR_HPRE_OFFSET 4
@@ -98,10 +109,12 @@ extern volatile struct advanced_control_timer_regs TIM1;
 
 extern volatile struct rcc_regs RCC;
 
-extern unsigned int NVIC_ISER;
-extern unsigned int NVIC_ISPR;
-extern unsigned int NVIC_ICPR;
-extern unsigned int NVIC_IPR[8];
+extern volatile unsigned int NVIC_ISER;
+extern volatile unsigned int NVIC_ISPR;
+extern volatile unsigned int NVIC_ICPR;
+extern volatile unsigned int NVIC_IPR[8];
+
+extern volatile struct usb_regs USB;
 
 /* Interrupts */
 #define _WWDG_IRQ 0
