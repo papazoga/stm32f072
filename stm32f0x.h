@@ -1,6 +1,17 @@
 #ifndef STM32F0X_H
 #define STM32F0X_H
 
+struct flash_regs {
+	unsigned int ACR;
+	unsigned int KEYR;
+	unsigned int OPTKEYR;
+	unsigned int SR;
+	unsigned int CR;
+	unsigned int AR;
+	unsigned int OBR;
+	unsigned int WRPR;
+};
+
 struct gpio_regs {
 	unsigned int MODER;
 	unsigned int OTYPER;
@@ -97,6 +108,8 @@ struct usb_regs {
 
 #define RCC_CR2_HSI48ON (1<<16)
 #define RCC_CR2_HSI48RDY (1<<17)
+
+extern volatile struct flash_regs FLASH;
 
 extern volatile struct gpio_regs GPIOA;
 extern volatile struct gpio_regs GPIOB;
