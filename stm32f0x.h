@@ -66,6 +66,50 @@ struct advanced_control_timer_regs {
 	unsigned int DMAR;
 };
 
+struct general_purpose_timer_regs {
+	unsigned int CR1;
+	unsigned int CR2;
+	unsigned int SMCR;
+	unsigned int DIER;
+	unsigned int SR;
+	unsigned int EGR;
+	unsigned int CCMR1;
+	unsigned int CCMR2;
+	unsigned int CCER;
+	unsigned int CNT;
+	unsigned int PSC;
+	unsigned int ARR;
+	unsigned int _res1;
+	unsigned int CCR1;
+	unsigned int CCR2;
+	unsigned int CCR3;
+	unsigned int CCR4;
+	unsigned int _res2;
+	unsigned int DCR;
+	unsigned int DMAR;
+};
+
+#define TIMx_CCMR1_CC1S(_x) ((_x)<<0)
+#define TIMx_CCMR1_CC2S(_x) ((_x)<<8)
+
+/* Input capture */
+#define TIMx_CCMR1_IC1PSC(_x) ((_x)<<2)
+#define TIMx_CCMR1_IC1F(_x) ((_x)<<4)
+
+#define TIMx_CCMR1_IC2PSC(_x) ((_x)<<10)
+#define TIMx_CCMR1_IC2F(_x) ((_x)<<12)
+
+/* Output capture */
+#define TIMx_CCMR1_OC1FE (1<<2)
+#define TIMx_CCMR1_OC1PE (1<<3)
+#define TIMx_CCMR1_OC1M(_x) ((_x)<<4)
+#define TIMx_CCMR1_OC1CE (1<<7)
+
+#define TIMx_CCMR1_OC2FE (1<<10)
+#define TIMx_CCMR1_OC2PE (1<<11)
+#define TIMx_CCMR1_OC2M(_x) ((_x)<<12)
+#define TIMx_CCMR1_OC2CE (1<<15)
+
 struct usb_regs {
 	unsigned int EPR[16];
 	unsigned int CNTR;
@@ -106,6 +150,8 @@ struct usb_regs {
 
 #define RCC_APB2ENR_TIM1EN (1<<11)
 
+#define RCC_APB1ENR_TIM2EN (1<<0)
+
 #define RCC_CR2_HSI48ON (1<<16)
 #define RCC_CR2_HSI48RDY (1<<17)
 
@@ -119,6 +165,7 @@ extern volatile struct gpio_regs GPIOE;
 extern volatile struct gpio_regs GPIOF;
 
 extern volatile struct advanced_control_timer_regs TIM1;
+extern volatile struct general_purpose_timer_regs TIM2;
 
 extern volatile struct rcc_regs RCC;
 
