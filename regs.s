@@ -1,5 +1,5 @@
-TIM0 = 0x40000000
-.global TIM0
+TIM2 = 0x40000000
+.global TIM2
 
 TIM3 = 0x40000400
 .global TIM3
