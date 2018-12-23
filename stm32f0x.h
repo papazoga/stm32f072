@@ -1,6 +1,8 @@
 #ifndef STM32F0X_H
 #define STM32F0X_H
 
+#include <stdint.h>
+
 struct flash_regs {
 	unsigned int ACR;
 	unsigned int KEYR;
@@ -111,27 +113,54 @@ struct general_purpose_timer_regs {
 #define TIMx_CCMR1_OC2CE (1<<15)
 
 struct usb_regs {
-	unsigned int EPR[16];
+	uint16_t EP0R;
+	uint16_t _res0;
+	uint16_t EP1R;
+	uint16_t _res1;
+	uint16_t EP2R;
+	uint16_t _res2;
+	uint16_t EP3R;
+	uint16_t _res3;
+	uint16_t EP4R;
+	uint16_t _res4;
+	uint16_t EP5R;
+	uint16_t _res5;
+	uint16_t EP6R;
+	uint16_t _res6;
+	uint16_t EP7R;
+	uint16_t _res7;
+	unsigned int _reserved[8];
 	unsigned int CNTR;
 	unsigned int ISTR;
 	unsigned int FNR;
 	unsigned int DADDR;
 	unsigned int BTABLE;
-	unsigned int LMPCSR;
+	unsigned int LPMCSR;
 	unsigned int BCDR;
 };
 
-#define RCC_CFGR_SW_OFFSET 0
-#define RCC_CFGR_SWS_OFFSET 2
-#define RCC_CFGR_HPRE_OFFSET 4
-#define RCC_CFGR_PPRE_OFFSET 8
-#define RCC_CFGR_ADCPRE_OFFSET 14
-#define RCC_CFGR_PLLSRC_OFFSET 15
-#define RCC_CFGR_PLLXTPRE_OFFSET 17
-#define RCC_CFGR_PLLMUL_OFFSET 18
-#define RCC_CFGR_MCO_OFFSET 24
-#define RCC_CFGR_MCOPRE_OFFSET 28
-#define RCC_CFGR_PLLNODIV_OFFSET 31
+#define RCC_CFGR_SW(_x) ((_x) << 0)
+#define RCC_CFGR_SWS(_x) ((_x) << 2)
+#define RCC_CFGR_HPRE(_x) ((_x) << 4)
+#define RCC_CFGR_PPRE(_x) ((_x) << 8)
+#define RCC_CFGR_ADCPRE(_x) ((_x << 14)
+#define RCC_CFGR_PLLSRC(_x) ((_x) << 15)
+#define RCC_CFGR_PLLXTPRE (1<<17)
+#define RCC_CFGR_PLLMUL(_x) ((_x) << 18)
+#define RCC_CFGR_MCO(_x) ((_x) ((_x) <<  24)
+#define RCC_CFGR_MCOPRE(_x) ((_x) << 28)
+#define RCC_CFGR_PLLNODIV 31
+
+#define RCC_CR_PLLRDY (1<<25)
+#define RCC_CR_PLLON (1<<24)
+#define RCC_CR_CSSON (1<<19)
+#define RCC_CR_HSEBYP (1<<18)
+#define RCC_CR_HSERDY (1<<17)
+#define RCC_CR_HSEON (1<<16)
+#define RCC_CR_HSICAL(_x) ((_x) << 24)
+#define RCC_CR_HSITRIM(_x) ((_x) <<3)
+#define RCC_CR_HSIRDY (1<<1)
+#define RCC_CR_HSION (1<<0)
 
 #define RCC_CFGR2_PREDIV_OFFSET 0
 
@@ -148,12 +177,78 @@ struct usb_regs {
 #define RCC_AHBENR_IOPFEN (1<<22)
 #define RCC_AHBENR_IOPGEN (1<<23)
 
+#define RCC_APB2ENR_SYSCFGEN (1<<0)
 #define RCC_APB2ENR_TIM1EN (1<<11)
 
 #define RCC_APB1ENR_TIM2EN (1<<0)
+#define RCC_APB1ENR_TIM3EN (1<<1)
+#define RCC_APB1ENR_TIM6EN (1<<4)
+#define RCC_APB1ENR_TIM7EN (1<<5)
+#define RCC_APB1ENR_TIM14EN (1<<8)
+#define RCC_APB1ENR_WWDGEN (1<<11)
+#define RCC_APB1ENR_SPI2EN (1<<14)
+#define RCC_APB1ENR_USART2EN (1<<17)
+#define RCC_APB1ENR_USART3EN (1<<18)
+#define RCC_APB1ENR_USART4EN (1<<19)
+#define RCC_APB1ENR_USART5EN (1<<20)
+#define RCC_APB1ENR_I2C1EN (1<<21)
+#define RCC_APB1ENR_I2C2EN (1<<22)
+#define RCC_APB1ENR_USBEN (1<<23)
+#define RCC_APB1ENR_CANEN (1<<25)
+#define RCC_APB1ENR_CRSEN (1<<27)
+#define RCC_APB1ENR_PWREN (1<<28)
+#define RCC_APB1ENR_DACEN (1<<29)
+#define RCC_APB1ENR_CECEN (1<<30)
 
 #define RCC_CR2_HSI48ON (1<<16)
 #define RCC_CR2_HSI48RDY (1<<17)
+
+#define USB_DADDR_EF (1<<7)
+
+#define USB_EPR_EA(_x) ((_x) << 0)
+#define USB_EPR_STAT_TX(_x) ((_x) << 4)
+#define USB_EPR_DTOG_TX (1<<6)
+#define USB_EPR_CTR_TX (1<<7)
+#define USB_EPR_EP_KIND (1<<8)
+#define USB_EPR_EP_TYPE(_x) ((_x)<<9)
+#define USB_EPR_SETUP (1<<11)
+#define USB_EPR_STAT_RX(_x) ((_x) << 12)
+#define USB_EPR_DTOG_RX (1<<14)
+#define USB_EPR_CTR_RX (1<<15)
+
+#define USB_CNTR_FRES (1<<0)
+#define USB_CNTR_PDWN (1<<1)
+#define USB_CNTR_LPMODE (1<<2)
+#define USB_CNTR_FSUSP (1<<3)
+#define USB_CNTR_RESUME (1<<4)
+#define USB_CNTR_L1RESUME (1<<5)
+#define USB_CNTR_L1REQM (1<<7)
+#define USB_CNTR_ESOFM (1<<8)
+#define USB_CNTR_SOFM (1<<9)
+#define USB_CNTR_RESETM (1<<10)
+#define USB_CNTR_SUSPM (1<<11)
+#define USB_CNTR_WKUPM (1<<12)
+#define USB_CNTR_ERRM (1<<13)
+#define USB_CNTR_PMAOVRM (1<<14)
+#define USB_CNTR_CTRM (1<<15)
+
+#define USB_ISTR_L1REQ (1<<7)
+#define USB_ISTR_ESOF (1<<8)
+#define USB_ISTR_SOF (1<<9)
+#define USB_ISTR_RESET (1<<10)
+#define USB_ISTR_SUSP (1<<11)
+#define USB_ISTR_WKUP (1<<12)
+#define USB_ISTR_ERR (1<<13)
+#define USB_ISTR_PMAOVR (1<<14)
+#define USB_ISTR_CTR (1<<15)
+#define USB_ISTR_DIR (1<<4)
+#define EP_ID(_x) ((_x) & 0xf)
+
+/* The endpoint register has a complicated toggle scheme */
+#define EP_TOGGLE_MASK 0x7070
+
+#define WRITE_EPR(_reg, _val)			\
+	_reg = (((_val) & ~EP_TOGGLE_MASK) | (((_val) & EP_TOGGLE_MASK) ^ _reg))
 
 extern volatile struct flash_regs FLASH;
 
@@ -175,6 +270,7 @@ extern volatile unsigned int NVIC_ICPR;
 extern volatile unsigned int NVIC_IPR[8];
 
 extern volatile struct usb_regs USB;
+extern volatile uint16_t USB_SRAM[0x400];
 
 /* Interrupts */
 #define _WWDG_IRQ 0

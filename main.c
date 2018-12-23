@@ -1,4 +1,5 @@
 #include "stm32f0x.h"
+#include <stdint.h>
 
 int led_state = 0;
 int count = 0;
@@ -6,18 +7,26 @@ int count = 0;
 int main()
 {
 	RCC.AHBENR |= RCC_AHBENR_IOPAEN | RCC_AHBENR_IOPBEN;
-	RCC.APB1ENR |= RCC_APB1ENR_TIM2EN;
+	RCC.APB1ENR |= RCC_APB1ENR_TIM2EN | RCC_APB1ENR_USBEN;
+	RCC.APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
 	/* Wait-state required if SYSCLK >= 24MHz */
 	FLASH.ACR |= 1;
 
+	/* Turn on HSI48 */
 	RCC.CR2 |= RCC_CR2_HSI48ON;
 
-	/* Wait for oscillator to become ready */
+	/* Wait for HSI48 to become ready */
 	while (!(RCC.CR2 & RCC_CR2_HSI48RDY));
 
-	/* Switch to HSI48 oscillator */
-	RCC.CFGR |= 3;
+	/* Set PLL parameters  for 24MHz */
+	RCC.CFGR |= RCC_CFGR_PLLSRC(1) | RCC_CFGR_PLLMUL(1);
+	RCC.CR |= RCC_CR_PLLON;
+
+	while (!(RCC.CR & RCC_CR_PLLRDY));
+
+	/* Switch to PLL */
+	RCC.CFGR |= RCC_CFGR_SW(1);
 
 	/* Set up PA15 for TIM2 OC1 output */
 	GPIOA.MODER |= 2 << 30;
@@ -28,6 +37,7 @@ int main()
 	GPIOB.MODER = 1;
 	GPIOB.OSPEEDR = 3;
 
+	/* Set up Timer 2 for simple PWM */
 	TIM2.PSC = 47;
 	TIM2.ARR = 50;
 	TIM2.CCR1 = 40;
@@ -37,8 +47,28 @@ int main()
 	TIM2.CR1 |= 1;
 
 	/* Enable the timer interrupt */
-	NVIC_ICPR = (1<< _TIM2_IRQ);
-//	NVIC_ISER = (1<< _TIM2_IRQ);
+	NVIC_ICPR = (1 << _TIM2_IRQ) | (1 << _USB_IRQ);
+	NVIC_ISER = (1 << _TIM2_IRQ) | (1 << _USB_IRQ);
+
+	/* Bring up the USB macrocell */
+	USB.BCDR |= 0x8000;
+	USB.CNTR = 1;		/* /PWRDN, enter RESET */
+
+	{ int i; for (i=0;i<25000;i++); }
+
+	USB.CNTR = 0;
+
+	/* Set interrupts */
+	USB.CNTR = USB_CNTR_RESETM |
+		USB_CNTR_L1REQM |
+		USB_CNTR_ESOFM |
+		USB_CNTR_SOFM |
+		USB_CNTR_RESETM |
+		USB_CNTR_SUSPM |
+		USB_CNTR_WKUPM |
+		USB_CNTR_ERRM |
+		USB_CNTR_PMAOVRM |
+		USB_CNTR_CTRM;
 
 	while (1) {
 		int i;
@@ -49,7 +79,7 @@ int main()
 				led_state = 1;
 		} else {
 			TIM2.CCR1++;
-			if (TIM2.CCR1 == 49)
+			if (TIM2.CCR1 == 30)
 				led_state = 0;
 		}
 	}
@@ -60,14 +90,7 @@ void __attribute__((interrupt("IRQ"))) _TIM2_handler()
 	TIM2.SR &= ~1;
 	NVIC_ICPR = (1 << _TIM2_IRQ);
 
-	if (led_state) {
-		GPIOB.ODR = 0;
-		led_state = 0;
-	} else {
-		led_state = 1;
-		GPIOB.ODR = 1;
-	}
-
 	count++;
+	if ((count & 0xfff) == 0)
+	    GPIOB.ODR ^= 1;
 }
-
