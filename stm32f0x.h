@@ -113,22 +113,7 @@ struct general_purpose_timer_regs {
 #define TIMx_CCMR1_OC2CE (1<<15)
 
 struct usb_regs {
-	uint16_t EP0R;
-	uint16_t _res0;
-	uint16_t EP1R;
-	uint16_t _res1;
-	uint16_t EP2R;
-	uint16_t _res2;
-	uint16_t EP3R;
-	uint16_t _res3;
-	uint16_t EP4R;
-	uint16_t _res4;
-	uint16_t EP5R;
-	uint16_t _res5;
-	uint16_t EP6R;
-	uint16_t _res6;
-	uint16_t EP7R;
-	uint16_t _res7;
+	unsigned int EPR[8];
 	unsigned int _reserved[8];
 	unsigned int CNTR;
 	unsigned int ISTR;
@@ -245,10 +230,44 @@ struct usb_regs {
 #define EP_ID(_x) ((_x) & 0xf)
 
 /* The endpoint register has a complicated toggle scheme */
+#define EP_W0_MASK 0x8080
 #define EP_TOGGLE_MASK 0x7070
 
-#define WRITE_EPR(_reg, _val)			\
-	_reg = (((_val) & ~EP_TOGGLE_MASK) | (((_val) & EP_TOGGLE_MASK) ^ _reg))
+#define EP_STATE_DISABLED 0
+#define EP_STATE_STALL 1
+#define EP_STATE_NAK 2
+#define EP_STATE_VALID 3
+
+#define EPR_WMR_PART(_regp) \
+	((*(_regp)) & ~(EP_W0_MASK | EP_TOGGLE_MASK))
+
+#define EPR_CLEAR_CTR_RX(_regp) \
+	*(_regp) = ( EPR_WMR_PART(_regp) | USB_EPR_CTR_TX )
+
+#define EPR_CLEAR_CTR_TX(_regp) \
+	*(_regp) = ( EPR_WMR_PART(_regp) | USB_EPR_CTR_RX )
+
+#define _epr_extract_stat_rx(_regp) \
+	( ((*(_regp)) >> 12) & 3 )
+
+#define _epr_extract_stat_tx(_regp) \
+	( ((*(_regp)) >> 4) & 3 )
+
+#define EPR_SET_STAT_RX(_regp, _val)					\
+	*(_regp) = ( EPR_WMR_PART(_regp) | \
+		     USB_EPR_STAT_RX(_epr_extract_stat_rx(_regp) ^ _val) | \
+		     EP_W0_MASK )
+
+#define EPR_SET_STAT_TX(_regp, _val)					\
+	*(_regp) = ( EPR_WMR_PART(_regp) | \
+		     USB_EPR_STAT_TX(_epr_extract_stat_tx(_regp) ^ _val) | \
+		     EP_W0_MASK )
+
+#define EPR_SET_TYPE(_regp, _val) \
+	*(_regp) |= ( USB_EPR_EP_TYPE(_val) | EP_W0_MASK )
+
+#define EPR_SET_ADDR(_regp, _val) \
+	*(_regp) |= ( _val | EP_W0_MASK )
 
 extern volatile struct flash_regs FLASH;
 

@@ -1,5 +1,7 @@
-#include "stm32f0x.h"
 #include <stdint.h>
+
+#include "stm32f0x.h"
+#include "usb.h"
 
 int led_state = 0;
 int count = 0;
@@ -50,25 +52,7 @@ int main()
 	NVIC_ICPR = (1 << _TIM2_IRQ) | (1 << _USB_IRQ);
 	NVIC_ISER = (1 << _TIM2_IRQ) | (1 << _USB_IRQ);
 
-	/* Bring up the USB macrocell */
-	USB.BCDR |= 0x8000;
-	USB.CNTR = 1;		/* /PWRDN, enter RESET */
-
-	{ int i; for (i=0;i<25000;i++); }
-
-	USB.CNTR = 0;
-
-	/* Set interrupts */
-	USB.CNTR = USB_CNTR_RESETM |
-		USB_CNTR_L1REQM |
-		USB_CNTR_ESOFM |
-		USB_CNTR_SOFM |
-		USB_CNTR_RESETM |
-		USB_CNTR_SUSPM |
-		USB_CNTR_WKUPM |
-		USB_CNTR_ERRM |
-		USB_CNTR_PMAOVRM |
-		USB_CNTR_CTRM;
+	usb_init();
 
 	while (1) {
 		int i;
