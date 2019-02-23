@@ -269,6 +269,12 @@ struct usb_regs {
 #define EPR_SET_ADDR(_regp, _val) \
 	*(_regp) |= ( _val | EP_W0_MASK )
 
+#define EPR_SET_TOGGLE(_regp, _mask)				\
+	*(_regp) = ( ((*_regp) & (_mask)) ^ (_mask) )
+
+#define EPR_CLEAR_TOGGLE(_regp, _mask)				\
+	*(_regp) = ( ((*_regp) & (_mask)) )
+
 extern volatile struct flash_regs FLASH;
 
 extern volatile struct gpio_regs GPIOA;

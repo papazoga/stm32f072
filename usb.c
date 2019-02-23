@@ -24,6 +24,7 @@ struct usb_endpoint {
 	int tx_max;
 	int rx_offset;
 	int rx_max;
+
 	unsigned char *tx_buf;
 	int tx_count;
 };
@@ -173,6 +174,15 @@ static void _copy_to_sram(volatile void *dst, const void *src, int len)
 	}
 }
 
+static void usb_transmit_stall(struct usb_endpoint *e)
+{
+	int ep = e->index;
+	volatile unsigned int *EPR = &USB.EPR[ep];
+
+	EPR_CLEAR_CTR_TX(EPR);
+	EPR_SET_STAT_TX(EPR, EP_STATE_STALL);
+}
+
 static void usb_transmit(struct usb_endpoint *e, const unsigned char *data, int len)
 {
 	int ep = e->index;
@@ -245,28 +255,23 @@ unsigned char buf[16];
 
 int descriptor_count = 0;
 
-static int usb_get_descriptor(int index, int type, unsigned char **data, int *len)
+static int usb_transmit_descriptor(struct usb_endpoint *e, int index, int type)
 {
 	switch (type) {
 	case 1:			/* DEVICE */
 		LOG('d');
-		*data = (unsigned char *)&usb_device_descriptor;
-		*len = sizeof(usb_device_descriptor);
-		return 0;
+		usb_transmit(e, usb_device_descriptor, sizeof(usb_device_descriptor));
 		break;
 	case 2:			/* CONFIGURATION */
 		LOG('c');
-		*data = (unsigned char *)&usb_configuration_descriptor;
-		*len = sizeof(usb_configuration_descriptor);
+		usb_transmit(e, usb_configuration_descriptor, sizeof(usb_configuration_descriptor));
 		return 0;
 		break;
 	case 6:			/* QUALIFIER */
-		*data = usb_descriptor_not_present;
-		*len = 0;
+		usb_transmit_stall(e);
 		return 0;
 		break;
 	default:
-		*data = 0;
 		BREAK();
 		break;
 	}
@@ -274,12 +279,13 @@ static int usb_get_descriptor(int index, int type, unsigned char **data, int *le
 
 int address_count = 0;
 
-static void usb_packet_recv(int ep)
+static void usb_packet_recv(struct usb_endpoint *e)
 {
+	int ep = e->index;
 	volatile uint16_t *desc = &USB_SRAM[4*ep];
+	volatile unsigned int *EPR = &USB.EPR[ep];
 	uint16_t addr_rx;
 	uint16_t count_rx;
-	volatile unsigned int *EPR = &USB.EPR[ep];
 	volatile void *src;
 	unsigned char *data;
 
@@ -292,17 +298,21 @@ static void usb_packet_recv(int ep)
 		LOG('S');
 		/* Unlock the SETUP bit */
 		EPR_CLEAR_CTR_RX(EPR);
+
+		/* Set DTOG_TX */
+		EPR_SET_TOGGLE(EPR, USB_EPR_DTOG_TX);
+
 		switch (buf[1]) {
 		case 0x05:	/* SET_ADDRESS */
 			LOG('A');
 			usb_device.address = buf[2];
-			usb_endpoint[0].tx_buf = (unsigned char *)1;
-			usb_endpoint[0].tx_count = 0;
+			usb_transmit(e, 0, 0);
 			address_count++;
 			break;
 		case 0x06:	/* GET_DESCRIPTOR */
 			LOG('D');
-			usb_get_descriptor(buf[2], buf[3], &usb_endpoint[0].tx_buf, &usb_endpoint[0].tx_count);
+			usb_transmit_descriptor(e, buf[2], buf[3]);
+			descriptor_count++;
 			break;
 		default:
 			BREAK();
@@ -311,6 +321,23 @@ static void usb_packet_recv(int ep)
 	} else {
 		if (count_rx & 0x3ff)
 			BREAK();
+	}
+}
+
+static void usb_transfer_handler(struct usb_endpoint *e)
+{
+	if (USB.ISTR & USB_ISTR_DIR) {
+		/* OUT or SETUP direction */
+		LOG('r');
+		usb_packet_recv(e);
+	} else {
+		/* IN */
+		if (usb_device.address) {
+			USB.DADDR = usb_device.address | 0x80;
+			usb_device.state = ADDRESS;
+		}
+		EPR_CLEAR_CTR_TX(&USB.EPR[0]);
+		LOG('t');
 	}
 }
 
@@ -369,30 +396,7 @@ void __attribute__((interrupt("IRQ"))) _USB_handler()
 		icount.CTR++;
 
 		LOG('I');
-
-		if (USB.ISTR & USB_ISTR_DIR) {
-			LOG('r');
-			usb_packet_recv(ep);
-		} else {
-			EPR_CLEAR_CTR_TX(&USB.EPR[0]);
-			LOG('t');
-			usb_endpoint[ep].tx_buf = 0;
-			if (usb_device.address && !(USB.DADDR & 0x7f)) {
-				USB.DADDR = 0x80 | usb_device.address;
-				usb_device.state = ADDRESS;
-			}
-		}
-
-		/* If we've got more to send, queue it up. Otherwise receive. */
-		if (usb_endpoint[ep].tx_buf) {
-			LOG('T');
-			usb_transmit(&usb_endpoint[ep], usb_endpoint[ep].tx_buf, usb_endpoint[ep].tx_count);
-			if (usb_endpoint[ep].tx_buf == usb_configuration_descriptor)
-				BREAK();
-		} else {
-			LOG('R');
-			usb_receive(&usb_endpoint[ep]);
-		}
+		usb_transfer_handler(&usb_endpoint[ep]);
 	}
 
 	if (USB.ISTR & USB_ISTR_L1REQ) {
