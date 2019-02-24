@@ -1,10 +1,17 @@
 #include "stm32f0x.h"
 #include <stdint.h>
 
-unsigned char blog[64];
+#ifdef ENABLE_BINARY_LOG
+#define BLOGLEN 128
+unsigned char blog[BLOGLEN];
 unsigned char logindex = 0;
 
-#define LOG(_x)   if (logindex < 64) { blog[logindex++] = (_x); } else BREAK();
+#define LOG(_x)   if (logindex < BLOGLEN) { blog[logindex++] = (_x); } else BREAK();
+#else
+
+#define LOG(_x)
+
+#endif
 
 struct {
 	enum usb_device_state {
@@ -24,10 +31,9 @@ struct usb_endpoint {
 	int tx_max;
 	int rx_offset;
 	int rx_max;
-
-	unsigned char *tx_buf;
-	int tx_count;
 };
+static void break_and_show_state(struct usb_endpoint *e);
+
 
 #define BREAK() 		__asm__("bkpt 0");
 
@@ -37,37 +43,31 @@ static enum usb_device_state usb_device_state;
 #define DEVICE_SUBCLASS      0
 #define DEVICE_PROTOCOL      2
 
-#define USB_MANUFACTURER     "ACME Gadgets Inc."
-#define USB_PRODUCT          "USB Gadget"
-#define USB_SERIAL_NUMBER    "00000000"
-#define USB_CONF_1		"c1"
+const unsigned char usb_string_descriptor_zero[] = {
+	4,
+	3,
+	0x09, 0x04,
+};
 
-#define MANUFACTURER_INDEX 0
-#define PRODUCT_INDEX (sizeof(USB_MANUFACTURER))
-#define SERIAL_NUMBER_INDEX (PRODUCT_INDEX + sizeof(USB_PRODUCT)) 
-#define USB_CONF_INDEX (SERIAL_NUMBER_INDEX + sizeof(USB_SERIAL_NUMBER))
-
-#define usb_descriptor_not_present ((unsigned char *)1)
-
-const char usb_string_descriptor[] =
-	USB_MANUFACTURER			\
-	USB_PRODUCT				\
-	USB_SERIAL_NUMBER;
+const char manufacturer_string[] = "ACME Gadgets Inc.";
+const char product_string[] = "USB Gadget";
+const char serialnumber_string[] = "1234";
+const char configuration_string[] = "Config 1";
 
 const unsigned char usb_device_descriptor[] = {
-	17,                     /* bLength */
+	18,                     /* bLength */
 	1,                      /* bDescriptorType */
 	0x00, 0x02,		/* bcdUSB */
 	DEVICE_CLASS, 	      	/* bDeviceClass */
 	DEVICE_SUBCLASS,	/* bDeviceSubClass */
 	DEVICE_PROTOCOL,       	/* bDeviceProtocol */
-	32,			/* bMaxPacketSize (valid: 8,16,32,64) */
+	64,			/* bMaxPacketSize (valid: 8,16,32,64) */
 	0xfe, 0xca,		/* idVendor */
 	0x0d, 0xf0,		/* idProduct */
 	0x00, 0x00,		/* bcdDevice */
-	MANUFACTURER_INDEX,	/* iManufacturer */
-	PRODUCT_INDEX,		/* iProduct */
-	SERIAL_NUMBER_INDEX,    /* iSerialNumber */
+	1,	/* iManufacturer */
+	2,		/* iProduct */
+	3,    /* iSerialNumber */
 	1 			/* bNumConfigurations */
 };
 
@@ -75,23 +75,12 @@ const unsigned char usb_configuration_descriptor[] = {
 	/* Configuration */
 	9,			/* bLength */
 	2,			/* bDescriptorType */
-	18, 0,			/* wTotalLength */
+	9, 0,			/* wTotalLength */
 	0,			/* bNumInterfaces */
 	1,			/* bConfigurationValue */
-	USB_CONF_INDEX,		/* iConfiguration */
+	4,		/* iConfiguration */
 	0x80,			/* bmAttributes */
 	50,			/* bMaxPower */
-
-	/* First Interface */
-	9,			/* bLength */
-	4,			/* bDescriptorType */
-	0,			/* bInterfaceNumber */
-	0,			/* bAlternateSetting */
-	0,			/* bNumEndpoints */
-	0,			/* bInterfaceClass */
-	0,			/* bInterfaceSubClass */
-	0,			/* bInterfaceProtocol */
-	0,			/* iInterface */
 };
 
 struct usb_endpoint usb_endpoint[] = {
@@ -102,8 +91,6 @@ struct usb_endpoint usb_endpoint[] = {
 		.tx_max = 64,
 		.rx_offset = 8,
 		.rx_max = 64,
-		.tx_buf = 0,
-		.tx_count = 0,
 	},
 };
 
@@ -183,18 +170,60 @@ static void usb_transmit_stall(struct usb_endpoint *e)
 	EPR_SET_STAT_TX(EPR, EP_STATE_STALL);
 }
 
+static void break_and_show_state(struct usb_endpoint *e)
+{
+	struct usb_regs usb;
+
+	int i;
+	unsigned int *p = (unsigned int *)&usb,
+		*q = (unsigned int *)&USB;
+
+	for (i=0;i<(sizeof(struct usb_regs)/4);i++)
+		p[i] = q[i];
+
+
+	struct {
+		unsigned char CTR_RX;
+		unsigned char DTOG_RX;
+		unsigned char STAT_RX;
+		unsigned char SETUP;
+		unsigned char CTR_TX;
+		unsigned char DTOG_TX;
+ char STAT_TX;
+	} state = {
+		.CTR_RX = (usb.EPR[0] & USB_EPR_CTR_RX) >> 15,
+		.DTOG_RX = (usb.EPR[0] & USB_EPR_DTOG_RX) >> 14,
+		.STAT_RX = (usb.EPR[0] & (3<<12)) >> 12,
+		.SETUP = (usb.EPR[0] & USB_EPR_SETUP) >> 11,
+		.CTR_TX = (usb.EPR[0] & USB_EPR_CTR_TX) >> 7,
+		.DTOG_TX = (usb.EPR[0] & USB_EPR_DTOG_TX) >> 6,
+		.STAT_TX = (usb.EPR[0] & (3<<4)) >> 4,
+	};
+
+	state;
+	usb;
+	BREAK();
+}
+
 static void usb_transmit(struct usb_endpoint *e, const unsigned char *data, int len)
 {
 	int ep = e->index;
 	volatile unsigned int *EPR = &USB.EPR[ep];
 	volatile uint16_t *desc = &USB_SRAM[4*ep];
+	uint16_t a,b,c,d;
 
 	_copy_to_sram(SRAM_ADDR_TO_PTR(e->tx_offset), data, len);
 
 	_write_sram(desc + 1, len);
 
 	EPR_CLEAR_CTR_TX(EPR);
+	EPR_SET_TOGGLE(EPR, USB_EPR_DTOG_RX, 0);
 	EPR_SET_STAT_TX(EPR, EP_STATE_VALID);
+}
+
+void usb_tick(void)
+{
+	LOG('.');
 }
 
 static void usb_receive(struct usb_endpoint *e)
@@ -207,6 +236,7 @@ static void usb_receive(struct usb_endpoint *e)
 
 	EPR_CLEAR_CTR_RX(EPR);
 	EPR_SET_STAT_RX(EPR, EP_STATE_VALID);
+	EPR_SET_TOGGLE(EPR, USB_EPR_DTOG_RX, 0);
 }
 
 void usb_setup_control_endpoint()
@@ -215,16 +245,16 @@ void usb_setup_control_endpoint()
 	volatile uint16_t *desc = &USB_SRAM[0];
 
 	_write_sram(desc + 0, usb_endpoint[0].tx_offset);		/* USB_ADDRn_TX */
-	_write_sram(desc + 2, usb_endpoint[0].rx_offset);		/* USB_ADDRn_RX */
 	_write_sram(desc + 1, 0);					/* USB_COUNTn_TX */
+	_write_sram(desc + 2, usb_endpoint[0].rx_offset);		/* USB_ADDRn_RX */
 	_write_sram(desc + 3, 0x8000 | (1<<10));			/* USB_COUNTn_RX */
 
 	EPR_SET_ADDR(EPR, 0);
 	EPR_SET_TYPE(EPR, 1);
 	EPR_SET_STAT_TX(EPR, EP_STATE_NAK);
-	EPR_SET_STAT_RX(EPR, EP_STATE_VALID);
+	EPR_SET_STAT_RX(EPR, EP_STATE_NAK);
 
-
+	USB.DADDR = 0x80;
 }
 
 void usb_init()
@@ -232,9 +262,6 @@ void usb_init()
 	/* Bring up the USB macrocell */
 	USB.BCDR |= 0x8000;
 	USB.CNTR = 1;		/* /PWRDN, enter RESET */
-
-	{ int i; for (i=0;i<25000;i++); }
-
 	USB.CNTR = 0;
 
 	/* Set interrupts */
@@ -252,11 +279,56 @@ void usb_init()
 
 unsigned char buf[16];
 
-
 int descriptor_count = 0;
+
+
+static void usb_transmit_string_descriptor(struct usb_endpoint *e, int index)
+{
+	int ep = e->index;
+	volatile unsigned int *EPR = &USB.EPR[ep];
+	volatile uint16_t *desc = &USB_SRAM[4*ep];
+	int len = 0;
+	const char *p;
+	volatile uint16_t *datap = SRAM_ADDR_TO_PTR(e->tx_offset);
+
+	switch (index) {
+	case 1:
+		p = manufacturer_string;
+		len = sizeof(manufacturer_string)-1;
+		break;
+	case 2:
+		p = product_string;
+		len = sizeof(product_string)-1;
+		break;
+	case 3:
+		p = serialnumber_string;
+		len = sizeof(serialnumber_string)-1;
+		break;
+	case 4:
+		p = configuration_string;
+		len = sizeof(configuration_string)-1;
+		break;
+	default:
+		break;
+	}
+
+	_write_sram(datap++, ((2*len+2) & 0xff) | (3 << 8));
+
+	while (*p)
+		_write_sram(datap++, *p++);
+
+	_write_sram(desc + 1, 2*len + 2);
+
+	EPR_CLEAR_CTR_TX(EPR);
+	EPR_SET_TOGGLE(EPR, USB_EPR_DTOG_RX, 0);
+	EPR_SET_STAT_TX(EPR, EP_STATE_VALID);
+}
 
 static int usb_transmit_descriptor(struct usb_endpoint *e, int index, int type)
 {
+	const char *p;
+	int len;
+
 	switch (type) {
 	case 1:			/* DEVICE */
 		LOG('d');
@@ -266,6 +338,17 @@ static int usb_transmit_descriptor(struct usb_endpoint *e, int index, int type)
 		LOG('c');
 		usb_transmit(e, usb_configuration_descriptor, sizeof(usb_configuration_descriptor));
 		return 0;
+		break;
+	case 3:
+		LOG('s');
+		if (index == 0) {
+			usb_transmit(e,
+				     usb_string_descriptor_zero,
+				     sizeof(usb_string_descriptor_zero));
+			len = sizeof(usb_string_descriptor_zero);
+		} else {
+			usb_transmit_string_descriptor(e, index);
+		}
 		break;
 	case 6:			/* QUALIFIER */
 		usb_transmit_stall(e);
@@ -286,21 +369,17 @@ static void usb_packet_recv(struct usb_endpoint *e)
 	volatile unsigned int *EPR = &USB.EPR[ep];
 	uint16_t addr_rx;
 	uint16_t count_rx;
-	volatile void *src;
 	unsigned char *data;
+	uint16_t epr;
 
 	addr_rx = _read_sram(desc + 2);
 	count_rx = _read_sram(desc + 3);
-	src = SRAM_ADDR_TO_PTR(addr_rx);
-	_copy_from_sram(buf, src, count_rx & 0x3ff);
+	_copy_from_sram(buf, SRAM_ADDR_TO_PTR(addr_rx), count_rx & 0x3ff);
 
 	if ((*EPR) & USB_EPR_SETUP) {
 		LOG('S');
 		/* Unlock the SETUP bit */
 		EPR_CLEAR_CTR_RX(EPR);
-
-		/* Set DTOG_TX */
-		EPR_SET_TOGGLE(EPR, USB_EPR_DTOG_TX);
 
 		switch (buf[1]) {
 		case 0x05:	/* SET_ADDRESS */
@@ -313,6 +392,10 @@ static void usb_packet_recv(struct usb_endpoint *e)
 			LOG('D');
 			usb_transmit_descriptor(e, buf[2], buf[3]);
 			descriptor_count++;
+			break;
+		case 0x09:	/* SET_CONFIGURATION */
+			LOG('C');
+			usb_transmit(e, 0, 0);
 			break;
 		default:
 			BREAK();
@@ -337,6 +420,7 @@ static void usb_transfer_handler(struct usb_endpoint *e)
 			usb_device.state = ADDRESS;
 		}
 		EPR_CLEAR_CTR_TX(&USB.EPR[0]);
+		EPR_SET_TOGGLE(&USB.EPR[0], USB_EPR_DTOG_RX, 0);
 		LOG('t');
 	}
 }
@@ -346,10 +430,12 @@ void __attribute__((interrupt("IRQ"))) _USB_handler()
 	unsigned int istr = USB.ISTR;
 
 	if (USB.ISTR & USB_ISTR_RESET) {
+		USB.DADDR = 0;
 		usb_device.state = INIT;
+		usb_device.address = 0;
 		usb_setup_control_endpoint();
 		USB.ISTR = ~USB_ISTR_RESET;
-		USB.DADDR |= 0x80;
+		LOG('0');
 		icount.RESET++;
 	}
 
@@ -367,6 +453,7 @@ void __attribute__((interrupt("IRQ"))) _USB_handler()
 		USB.ISTR = ~USB_ISTR_SUSP;
 		icount.SUSP++;
 		USB.CNTR |= USB_CNTR_FSUSP | USB_CNTR_LPMODE;
+		LOG('-');
 	}
 
 	if (USB.ISTR & USB_ISTR_WKUP) {
@@ -385,6 +472,7 @@ void __attribute__((interrupt("IRQ"))) _USB_handler()
 			USB_CNTR_PMAOVRM |
 			USB_CNTR_CTRM;
 
+		LOG('+');
 		USB.ISTR = ~USB_ISTR_WKUP;
 	}
 
@@ -406,6 +494,7 @@ void __attribute__((interrupt("IRQ"))) _USB_handler()
 
 	if (USB.ISTR & USB_ISTR_ERR) {
 		USB.ISTR = ~USB_ISTR_ERR;
+		LOG('!');
 		icount.ERR++;
 	}
 

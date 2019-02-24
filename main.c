@@ -69,6 +69,8 @@ int main()
 	}
 }
 
+void usb_tick(void);
+
 void __attribute__((interrupt("IRQ"))) _TIM2_handler()
 {
 	TIM2.SR &= ~1;
@@ -77,4 +79,7 @@ void __attribute__((interrupt("IRQ"))) _TIM2_handler()
 	count++;
 	if ((count & 0xfff) == 0)
 	    GPIOB.ODR ^= 1;
+
+	if ((count & 0xff) == 0)
+		usb_tick();
 }
