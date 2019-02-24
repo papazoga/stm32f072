@@ -1,4 +1,4 @@
-CFLAGS=-mcpu=cortex-m0plus -mthumb -g
+CFLAGS=-mcpu=cortex-m0plus -mthumb -g -Wall
 ASFLAGS=-mcpu=cortex-m0plus -mthumb
 OBJCOPY=arm-none-eabi-objcopy
 OBJS=start.o regs.o interrupt.o main.o usb.o

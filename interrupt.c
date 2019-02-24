@@ -40,6 +40,5 @@ void __attribute__((weak, alias("_default_handler"))) _USB_handler();
 
 void __attribute__((interrupt("IRQ"))) _default_handler()
 {
-	register unsigned int r0 asm("r0") = 0xcafef00d;
 	for (;;);
 }
