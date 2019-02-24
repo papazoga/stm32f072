@@ -332,7 +332,7 @@ static void usb_transmit_string_descriptor(struct usb_endpoint *e, int index)
 	if (index == 0) {
 		_write_sram(datap++, 0x0304);
 		_write_sram(datap++, 0x0409);
-		len = 2;
+		len = 1;
 		goto send;
 	}
 
@@ -348,6 +348,7 @@ send:
 
 	EPR_CLEAR_CTR_TX(EPR);
 	EPR_SET_TOGGLE(EPR, USB_EPR_DTOG_RX, 0);
+	EPR_SET_TOGGLE(EPR, USB_EPR_DTOG_TX, USB_EPR_DTOG_TX);
 	EPR_SET_STAT_TX(EPR, EP_STATE_VALID);
 }
 
