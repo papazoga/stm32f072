@@ -238,14 +238,14 @@ struct usb_regs {
 #define EP_STATE_NAK 2
 #define EP_STATE_VALID 3
 
-#define EPR_WMR_PART(_regp) \
+#define EPR_RMW_PART(_regp) \
 	((*(_regp)) & ~(EP_W0_MASK | EP_TOGGLE_MASK))
 
 #define EPR_CLEAR_CTR_RX(_regp) \
-	*(_regp) = ( EPR_WMR_PART(_regp) | USB_EPR_CTR_TX )
+	*(_regp) = ( EPR_RMW_PART(_regp) | USB_EPR_CTR_TX )
 
 #define EPR_CLEAR_CTR_TX(_regp) \
-	*(_regp) = ( EPR_WMR_PART(_regp) | USB_EPR_CTR_RX )
+	*(_regp) = ( EPR_RMW_PART(_regp) | USB_EPR_CTR_RX )
 
 #define _epr_extract_stat_rx(_regp) \
 	( ((*(_regp)) >> 12) & 3 )
@@ -254,17 +254,17 @@ struct usb_regs {
 	( ((*(_regp)) >> 4) & 3 )
 
 #define EPR_SET_TOGGLE(_regp, _mask, _val)  \
-	*(_regp) = ( EPR_WMR_PART(_regp) | \
+	*(_regp) = ( EPR_RMW_PART(_regp) | \
 		     ( ((*(_regp)) & (_mask)) ^ ((_val) & (_mask)) ) |	\
 		     EP_W0_MASK )
 
 #define EPR_SET_STAT_RX(_regp, _val)					\
-	*(_regp) = ( EPR_WMR_PART(_regp) | \
+	*(_regp) = ( EPR_RMW_PART(_regp) | \
 		     USB_EPR_STAT_RX(_epr_extract_stat_rx(_regp) ^ _val) | \
 		     EP_W0_MASK )
 
 #define EPR_SET_STAT_TX(_regp, _val)					\
-	*(_regp) = ( EPR_WMR_PART(_regp) | \
+	*(_regp) = ( EPR_RMW_PART(_regp) | \
 		     USB_EPR_STAT_TX(_epr_extract_stat_tx(_regp) ^ _val) | \
 		     EP_W0_MASK )
 
