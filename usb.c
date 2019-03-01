@@ -5,7 +5,6 @@
 #ifdef DEBUG
 
 static void break_and_show_state(struct usb_endpoint *e);
-#define BREAK() 		__asm__("bkpt 0");
 
 unsigned char binary_log[BLOGLEN];
 unsigned char binary_log_index = 0;
@@ -36,7 +35,6 @@ struct string_descriptor string_descriptor[] = {
 	STRING_DESCRIPTOR(configuration_string),
 };
 
-
 const unsigned char usb_device_descriptor[] = {
 	18,                     /* bLength */
 	1,                      /* bDescriptorType */
@@ -58,12 +56,31 @@ const unsigned char usb_configuration_descriptor[] = {
 	/* Configuration */
 	9,			/* bLength */
 	2,			/* bDescriptorType */
-	9, 0,			/* wTotalLength */
-	0,			/* bNumInterfaces */
+	25, 0,			/* wTotalLength */
+	1,			/* bNumInterfaces */
 	1,			/* bConfigurationValue */
 	CONFIGURATION_INDEX,   	/* iConfiguration */
 	0x80,			/* bmAttributes */
 	50,			/* bMaxPower */
+
+	/* First Interface */
+	9,			/* bLength */
+	4,			/* bDescriptorType */
+	1,			/* bInterfaceNumber */
+	0,			/* bAlternateSetting */
+	1,			/* bNumEndpoints */
+	1,			/* bInterfaceClass */
+	0,			/* bInterfaceSubClass */
+	0,			/* bInterfaceProtocol */
+	0,			/* iInterface */
+
+	/* First Endpoint */
+	7,			/* bLength */
+	5, 			/* bDescriptorType */
+	1,			/* bEndpointAddress */
+	3,			/* bmAttributes */
+	32, 0,			/* wMaxPacketSize */
+	16,			/* bInterval */
 };
 
 struct usb_ctrl_info usb_ctrl_endpoint_info = {
@@ -72,17 +89,30 @@ struct usb_ctrl_info usb_ctrl_endpoint_info = {
 	.string_desc_table = string_descriptor,
 };
 
+struct usb_intr_info usb_intr_endpoint_info;
+
 struct usb_endpoint usb_endpoint[] = {
 	/* Control */
 	{
 		.index = 0,
-		.tx_offset = 100,
+		.tx_offset = 80,
 		.tx_max = 64,
-		.rx_offset = 8,
+		.rx_offset = 16,
 		.rx_max = 64,
 		.ops = &usb_ctrl_ops,
 		.priv = &usb_ctrl_endpoint_info,
 	},
+
+	/* Interrupt In */
+	{
+		.index = 1,
+		.tx_offset = 144,
+		.tx_max = 64,
+		.rx_offset = 208,
+		.rx_max = 64,
+		.ops = &usb_intr_ops,
+		.priv = &usb_intr_endpoint_info,
+	}
 };
 
 struct icount {
@@ -212,6 +242,7 @@ void __attribute__((interrupt("IRQ"))) _USB_handler()
 {
 	if (USB.ISTR & USB_ISTR_RESET) {
 		usb_endpoint[0].ops->init(&usb_endpoint[0]);
+		usb_endpoint[1].ops->init(&usb_endpoint[1]);
 		USB.ISTR = ~USB_ISTR_RESET;
 		LOG('0');
 		icount.RESET++;

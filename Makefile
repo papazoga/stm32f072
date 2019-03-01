@@ -1,7 +1,7 @@
 CFLAGS=-mcpu=cortex-m0plus -mthumb -g -Wall
 ASFLAGS=-mcpu=cortex-m0plus -mthumb
 OBJCOPY=arm-none-eabi-objcopy
-OBJS=start.o regs.o interrupt.o main.o usb.o usb_ctrl.o
+OBJS=start.o regs.o interrupt.o main.o usb.o usb_ctrl.o usb_intr.o
 LDFLAGS=-Tstm32f07x.ld
 CC=arm-none-eabi-gcc
 AS=arm-none-eabi-as

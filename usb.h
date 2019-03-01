@@ -1,6 +1,8 @@
 #ifndef _USB_H
 #define _USB_H
 
+#define BREAK() 		__asm__("bkpt 0")
+
 struct usb_endpoint {
 	int index;
 	int tx_offset;
@@ -18,6 +20,7 @@ struct usb_endpoint_ops {
 };
 
 extern struct usb_endpoint_ops usb_ctrl_ops;
+extern struct usb_endpoint_ops usb_intr_ops;
 
 #define SRAM_ADDR_TO_PTR(_addr)   (&USB_SRAM[_addr/2])
 
@@ -65,6 +68,10 @@ struct usb_ctrl_info {
 		CONFIGURED
 	} dev_state;
 	unsigned char dev_address;
+};
+
+struct usb_intr_info {
+	int s;
 };
 
 void usb_init();
